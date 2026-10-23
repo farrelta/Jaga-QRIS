@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QRIS Guard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="mark" aria-hidden="true">Q</div>
+      <div><h1>QRIS Guard</h1><p>Check the payment details before you pay.</p></div>
+    </header>
+
+    <section class="card input-card" aria-labelledby="scan-title">
+      <div class="section-heading"><div><span class="eyebrow">LOCAL CHECK</span><h2 id="scan-title">Inspect a QRIS payload</h2></div><span class="local-badge">On this device</span></div>
+      <label for="payload">Paste decoded QR data</label>
+      <textarea id="payload" rows="4" spellcheck="false" placeholder="Paste the text decoded from the QR code…"></textarea>
+      <div class="actions">
+        <button id="analyze" class="primary">Analyze payload</button>
+        <button id="sample" class="secondary">Load demo</button>
+      </div>
+      <div class="scan-row">
+        <label class="file-button" for="qr-image">Choose QR image</label>
+        <input id="qr-image" type="file" accept="image/*">
+        <span id="scan-support" class="helper">Checking image scan support…</span>
+      </div>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="result" class="card result-card" hidden aria-live="polite"></section>
+
+    <section class="page-check">
+      <div><strong>Scan this page</strong><p>Check visible QR images and text after you click.</p></div>
+      <button id="page-check" class="outline">Scan page</button>
+    </section>
+    <p class="disclaimer">A warning is a reason to verify the recipient in your payment app. It is not proof of fraud.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
