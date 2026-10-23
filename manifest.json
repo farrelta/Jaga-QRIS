@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Jaga QRIS",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Locally inspect QRIS payloads and compare merchant details with the current page.",
   "permissions": ["activeTab", "scripting"],
   "action": {

@@ -40,7 +40,7 @@
       <div><strong>Scan this page</strong><p>Check the visible area and page text after you click.</p></div>
       <button id="page-check" class="outline">Scan page</button>
     </section>
-    <p class="disclaimer">A warning is a reason to verify the recipient in your payment app. It is not proof of fraud.</p>
+      <p class="disclaimer">The experimental match score reflects text evidence, not a calibrated probability or proof of fraud. Confirm the recipient in your payment app.</p>
     </section>
 
     <section id="merchants-panel" class="tab-panel" role="tabpanel" aria-labelledby="merchants-tab" hidden>
@@ -64,6 +64,7 @@
     </section>
   </main>
   <script src="qr-scanner.umd.min.js"></script>
+  <script src="local-matcher.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
