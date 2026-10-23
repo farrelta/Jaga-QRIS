@@ -1,26 +1,30 @@
-# QRIS Guard prototype
+# Jaga QRIS prototype
 
-A local-first Chrome extension prototype for inspecting QRIS payment payloads and comparing the encoded merchant name with text on the page you choose to check.
+A local-first Chrome extension for inspecting QRIS payment payloads and comparing the encoded merchant name with text on the current page.
 
 ## Load it in Chrome
 
 1. Open `chrome://extensions`.
 2. Turn on **Developer mode**.
 3. Choose **Load unpacked** and select this project folder.
-4. Open the QRIS Guard extension from the toolbar.
-5. Choose **Load demo** to see a valid example and its parsed fields.
+4. Open the Jaga QRIS extension from the toolbar.
+5. Use **Scan QRIS** to inspect a code, or **Saved merchants** to add and manage local merchant records.
+6. Choose **Load demo** to see a valid example and its parsed fields.
 
-To check a page, open it and click **Scan page** in the extension. It reads visible text and tries to decode visible QR images after that click. You can also choose a QR image file. Image decoding depends on the browser and operating system exposing the native QR detector. If it is unavailable, paste the decoded QR text instead.
+To check a page, open it, scroll the QR code into view, then click **Scan page**. The extension captures the visible tab, scans that screenshot locally, and reads page text only after the click. You can also choose a QR image file or paste decoded QR text.
 
 ## What is included
 
-- Local EMV-style TLV field parsing for QR payment data.
-- Required-field checks and CRC-16/CCITT-FALSE checksum verification.
+- Local EMV-style TLV field parsing and CRC-16/CCITT-FALSE checksum verification.
 - Merchant, city, country, currency, amount, and static/dynamic indicator display.
-- A small fixture of demo merchant names and aliases.
-- A cautious page comparison: a different known demo merchant on the page raises a possible mismatch; missing page text is not treated as proof of fraud.
-- Optional local QR image decoding through the browser's `BarcodeDetector` API.
+- Demo merchant records and user-managed merchant names, aliases, cities, and verification notes saved in this browser.
+- Cautious page comparison with evidence and uncertainty labels.
+- Local QR image decoding through the bundled `qr-scanner` library and worker.
 
 ## Limits
 
-The merchant records are examples, not a verified directory. A valid checksum confirms payload integrity, not the identity of the recipient. The browser's built-in image decoder is not available on every platform; this prototype does not bundle a fallback decoder yet. It has no backend, external requests, AI model, payment integration, or automated reporting. Always confirm the displayed recipient in your payment app before paying.
+Demo merchant records are examples, not a verified directory. User-saved records are only as trustworthy as the information entered. A valid checksum confirms payload integrity, not recipient identity. Page scanning covers the visible viewport only, so scroll the QR into view first. The prototype has no backend, external requests, AI model, payment integration, or automated reporting. Always confirm the displayed recipient in your payment app before paying.
+
+## Third-party software
+
+The extension bundles `qr-scanner` version 1.4.2 under the MIT License. Its UMD build loads the adjacent worker using the package's current setup; Jaga QRIS does not set a worker path. See [LICENSE-qr-scanner.txt](LICENSE-qr-scanner.txt).

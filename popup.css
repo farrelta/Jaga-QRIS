@@ -6,6 +6,11 @@ body { margin: 0; width: 390px; min-height: 520px; }
 .mark { display: grid; place-items: center; width: 40px; height: 40px; color: white; background: #087b58; border-radius: 13px; font-weight: 800; font-size: 21px; }
 h1 { font-size: 18px; margin: 0 0 3px; letter-spacing: -.3px; }
 .header p, .page-check p { margin: 0; color: #65736e; font-size: 12px; }
+.tabs { display: flex; gap: 5px; padding: 4px; margin: 0 0 12px; border-radius: 11px; background: #e9f0ec; }
+.tab { flex: 1; color: #61736a; background: transparent; padding: 9px 10px; }
+.tab.active { color: #126447; background: #fff; box-shadow: 0 1px 4px #173c2c17; }
+.tab:focus-visible { outline: 2px solid #14936c; outline-offset: 1px; }
+.tab-panel { display: block; }
 .card { background: white; border: 1px solid #e0e9e4; border-radius: 14px; box-shadow: 0 3px 12px #133a2710; padding: 16px; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .eyebrow { display: block; color: #078259; font-weight: 750; letter-spacing: 1px; font-size: 9px; margin-bottom: 5px; }
@@ -47,4 +52,15 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .page-check p { margin-top: 3px; font-size: 10px; }
 .outline { color: #087b58; border: 1px solid #b9d7ca; background: transparent; white-space: nowrap; }
 .disclaimer { color: #859189; font-size: 9px; line-height: 1.45; margin: 6px 2px 0; }
+.merchant-card { margin-top: 12px; }
+.section-copy { color: #718078; font-size: 10px; line-height: 1.45; margin: -5px 0 12px; }
+input[type=text], input:not([type]) { width: 100%; border: 1px solid #d7e1dc; background: #fbfdfc; border-radius: 8px; padding: 9px; color: #263a31; outline: none; font: inherit; font-size: 11px; margin-bottom: 9px; }
+input:focus { border-color: #14936c; box-shadow: 0 0 0 3px #14936c18; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+#merchant-form .actions { margin-top: 0; }
+.merchant-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.merchant-entry { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #edf1ef; padding: 9px 0; }
+.merchant-entry strong { display: block; font-size: 10px; }
+.merchant-entry small { display: block; color: #7a8982; font-size: 9px; margin-top: 3px; }
+.remove-merchant { color: #8a5045; background: #fff3f0; padding: 6px 8px; font-size: 9px; }
 [hidden] { display: none !important; }

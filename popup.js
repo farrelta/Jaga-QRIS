@@ -3,10 +3,55 @@ const payloadInput = $("#payload");
 const message = $("#message");
 const result = $("#result");
 
-const knownMerchants = [
-  { name: "KOPI SENJA UGM", aliases: ["KOPI SENJA", "KOPI SENJA UGM"], city: "YOGYAKARTA" },
-  { name: "TOKO MAKMUR", aliases: ["TOKO MAKMUR"], city: "YOGYAKARTA" }
+function activateTab(name) {
+  for (const tab of document.querySelectorAll("[role=tab]")) {
+    const active = tab.dataset.tab === name;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+  }
+  $("#scan-panel").hidden = name !== "scan";
+  $("#merchants-panel").hidden = name !== "merchants";
+}
+
+document.querySelectorAll("[role=tab]").forEach((tab, index, tabs) => {
+  tab.addEventListener("click", () => activateTab(tab.dataset.tab));
+  tab.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const next = tabs[(index + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+    activateTab(next.dataset.tab);
+    next.focus();
+  });
+});
+
+const demoMerchants = [
+  { name: "KOPI SENJA UGM", aliases: ["KOPI SENJA", "KOPI SENJA UGM"], city: "YOGYAKARTA", demo: true },
+  { name: "TOKO MAKMUR", aliases: ["TOKO MAKMUR"], city: "YOGYAKARTA", demo: true }
 ];
+const merchantStorageKey = "jagaQrisSavedMerchants";
+let savedMerchants = loadSavedMerchants();
+let knownMerchants = [...demoMerchants, ...savedMerchants];
+
+function loadSavedMerchants() {
+  try {
+    const records = JSON.parse(localStorage.getItem(merchantStorageKey) || "[]");
+    return Array.isArray(records) ? records.filter((record) => record && typeof record.name === "string" && Array.isArray(record.aliases)) : [];
+  } catch { return []; }
+}
+
+function saveMerchants() {
+  localStorage.setItem(merchantStorageKey, JSON.stringify(savedMerchants));
+  knownMerchants = [...demoMerchants, ...savedMerchants];
+  renderMerchantList();
+}
+
+function renderMerchantList() {
+  const list = $("#merchant-list");
+  $("#merchant-count").textContent = `${savedMerchants.length} saved`;
+  const records = [...savedMerchants.map((merchant, index) => ({ ...merchant, index, removable: true })), ...demoMerchants.map((merchant) => ({ ...merchant, removable: false }))];
+  list.innerHTML = records.map((merchant) => `<li class="merchant-entry"><div><strong>${escapeHtml(merchant.name)}</strong><small>${escapeHtml(merchant.city || "City not set")} · ${merchant.removable ? "Your record" : "Demo record"}${merchant.source ? ` · ${escapeHtml(merchant.source)}` : ""}</small></div>${merchant.removable ? `<button class="remove-merchant" type="button" data-remove="${merchant.index}" aria-label="Remove ${escapeHtml(merchant.name)}">Remove</button>` : ""}</li>`).join("");
+}
 
 function normalize(value = "") {
   return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim().replace(/\s+/g, " ");
@@ -102,11 +147,12 @@ function analyze(decoded, pageText = "") {
     const cityMatch = !exactMatch.city || normalize(exactMatch.city) === normalize(decoded.city);
     status = cityMatch ? "match" : "review";
     title = cityMatch ? "Matches a saved merchant" : "Merchant city differs";
-    subtitle = cityMatch ? "The encoded merchant name matches a local demo record." : "The merchant name matched, but its saved city differs.";
+    subtitle = cityMatch ? (exactMatch.demo ? "The encoded merchant name matches a local demo record." : "The encoded merchant name matches a merchant you saved.") : "The merchant name matched, but its saved city differs.";
     evidence.push(`QRIS merchant “${decoded.name}” matches local record “${exactMatch.name}”.`);
     if (exactMatch.city) evidence.push(`Encoded city: ${decoded.city || "not provided"}; saved city: ${exactMatch.city}.`);
+    if (exactMatch.source) evidence.push(`Your verification note: ${exactMatch.source}.`);
   } else {
-    evidence.push("This merchant is not present in the local demo records.");
+    evidence.push("This merchant is not present in your saved or demo records.");
   }
 
   if (pageText && decoded.name) {
@@ -119,7 +165,7 @@ function analyze(decoded, pageText = "") {
   if (pageMerchant && decoded.formatValid && decoded.crcValid) {
     status = "review";
     title = "Possible merchant mismatch";
-    subtitle = "The page mentions a different merchant in the local demo records.";
+    subtitle = "The page mentions a different merchant in your saved or demo records.";
     evidence.unshift(`Page text mentions “${pageMerchant.name}”, while the QRIS encodes “${decoded.name}”.`);
     evidence.push("This is a possible discrepancy only; confirm the recipient with the business and your payment app.");
   }
@@ -164,73 +210,68 @@ $("#sample").addEventListener("click", () => {
   analyzeCurrent();
 });
 
+$("#merchant-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const name = String(form.get("name") || "").trim();
+  const city = String(form.get("city") || "").trim();
+  const aliases = String(form.get("aliases") || "").split(",").map((alias) => alias.trim()).filter(Boolean);
+  const source = String(form.get("source") || "").trim();
+  const allNames = [...demoMerchants, ...savedMerchants].flatMap((merchant) => [merchant.name, ...merchant.aliases]).map(normalize);
+  if (!name) return;
+  if ([name, ...aliases].some((candidate) => allNames.includes(normalize(candidate)))) {
+    $("#merchant-message").textContent = "That name or alias is already in the local merchant records.";
+    return;
+  }
+  savedMerchants.push({ name, aliases: [name, ...aliases], city, source });
+  saveMerchants();
+  event.currentTarget.reset();
+  $("#merchant-message").textContent = "Merchant saved in this browser.";
+});
+
+$("#merchant-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove]");
+  if (!button) return;
+  savedMerchants.splice(Number(button.dataset.remove), 1);
+  saveMerchants();
+  $("#merchant-message").textContent = "Saved merchant removed.";
+});
+
 $("#page-check").addEventListener("click", async () => {
   message.textContent = "";
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) throw new Error("No active page is available.");
+    const screenshot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+    let scannedPayload = "";
+    try {
+      const code = await QrScanner.scanImage(screenshot, { returnDetailedScanResult: true });
+      scannedPayload = code?.data || "";
+    } catch { /* It is valid for a page to have no QR code in view. */ }
     const [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: async () => {
-        const text = (document.body?.innerText || "").slice(0, 12000);
-        const found = [];
-        if (globalThis.BarcodeDetector) {
-          try {
-            const formats = await BarcodeDetector.getSupportedFormats();
-            if (formats.includes("qr_code")) {
-              const detector = new BarcodeDetector({ formats: ["qr_code"] });
-              const images = [...document.images].filter((image) => {
-                const rect = image.getBoundingClientRect();
-                return rect.width > 48 && rect.height > 48 && rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth;
-              }).slice(0, 30);
-              for (const image of images) {
-                try {
-                  for (const code of await detector.detect(image)) found.push(code.rawValue);
-                } catch { /* Ignore cross-origin or unsupported image formats. */ }
-                if (found.length) break;
-              }
-            }
-          } catch { /* Native QR scan is optional on this platform. */ }
-        }
-        return { title: document.title, text, payload: found[0] || "" };
-      }
+      func: () => ({ title: document.title, text: (document.body?.innerText || "").slice(0, 12000) })
     });
-    if (injection.result?.payload) payloadInput.value = injection.result.payload;
-    if (!payloadInput.value.trim()) throw new Error("No QR image was decoded on this page. Paste QR text or choose a QR image, then scan again.");
+    if (scannedPayload) payloadInput.value = scannedPayload;
+    if (!payloadInput.value.trim()) throw new Error("No QR code found in the visible area. Scroll the QR into view, or paste its decoded text.");
     const decoded = decodePayload(payloadInput.value);
     render(decoded, analyze(decoded, injection.result?.text || ""));
-    message.textContent = injection.result?.payload ? "QR image and page text checked locally." : `Page text checked${injection.result?.title ? `: ${injection.result.title}` : ""}.`;
+    message.textContent = scannedPayload ? "Visible page area and page text checked locally." : `Page text checked${injection.result?.title ? `: ${injection.result.title}` : ""}.`;
   } catch (error) {
     message.textContent = error.message.includes("Cannot access") ? "This browser page does not allow extension access." : error.message;
   }
 });
 
-async function checkScannerSupport() {
-  try {
-    const formats = globalThis.BarcodeDetector ? await BarcodeDetector.getSupportedFormats() : [];
-    if (formats.includes("qr_code")) $("#scan-support").textContent = "Image scan supported in this browser.";
-    else $("#scan-support").textContent = "Image scan unavailable here; paste decoded QR text instead.";
-  } catch {
-    $("#scan-support").textContent = "Image scan unavailable here; paste decoded QR text instead.";
-  }
+function checkScannerSupport() {
+  $("#scan-support").textContent = typeof QrScanner?.scanImage === "function" ? "Offline QR image scan ready." : "QR image scan unavailable; paste decoded QR text instead.";
 }
 
 $("#qr-image").addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
-  if (!globalThis.BarcodeDetector) {
-    message.textContent = "QR image scanning is not supported by this browser. Paste decoded QR text to continue.";
-    return;
-  }
   try {
-    const formats = await BarcodeDetector.getSupportedFormats();
-    if (!formats.includes("qr_code")) throw new Error("QR image scanning is not supported by this browser.");
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
-    const bitmap = await createImageBitmap(file);
-    const codes = await detector.detect(bitmap);
-    bitmap.close?.();
-    if (!codes.length) throw new Error("No QR code found. Try a clearer image or paste the decoded text.");
-    payloadInput.value = codes[0].rawValue;
+    const code = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
+    payloadInput.value = code.data;
     analyzeCurrent();
   } catch (error) {
     message.textContent = error.message;
@@ -240,3 +281,4 @@ $("#qr-image").addEventListener("change", async (event) => {
 });
 
 checkScannerSupport();
+renderMerchantList();

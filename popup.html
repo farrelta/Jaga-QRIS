@@ -3,16 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QRIS Guard</title>
+  <title>Jaga QRIS</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main class="app">
     <header class="header">
       <div class="mark" aria-hidden="true">Q</div>
-      <div><h1>QRIS Guard</h1><p>Check the payment details before you pay.</p></div>
+      <div><h1>Jaga QRIS</h1><p>Check the payment details before you pay.</p></div>
     </header>
 
+    <nav class="tabs" role="tablist" aria-label="Jaga QRIS sections">
+      <button id="scan-tab" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="scan-panel" data-tab="scan">Scan QRIS</button>
+      <button id="merchants-tab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="merchants-panel" data-tab="merchants">Saved merchants</button>
+    </nav>
+
+    <section id="scan-panel" class="tab-panel" role="tabpanel" aria-labelledby="scan-tab">
     <section class="card input-card" aria-labelledby="scan-title">
       <div class="section-heading"><div><span class="eyebrow">LOCAL CHECK</span><h2 id="scan-title">Inspect a QRIS payload</h2></div><span class="local-badge">On this device</span></div>
       <label for="payload">Paste decoded QR data</label>
@@ -30,13 +36,34 @@
     </section>
 
     <section id="result" class="card result-card" hidden aria-live="polite"></section>
-
     <section class="page-check">
-      <div><strong>Scan this page</strong><p>Check visible QR images and text after you click.</p></div>
+      <div><strong>Scan this page</strong><p>Check the visible area and page text after you click.</p></div>
       <button id="page-check" class="outline">Scan page</button>
     </section>
     <p class="disclaimer">A warning is a reason to verify the recipient in your payment app. It is not proof of fraud.</p>
+    </section>
+
+    <section id="merchants-panel" class="tab-panel" role="tabpanel" aria-labelledby="merchants-tab" hidden>
+    <section class="card merchant-card" aria-labelledby="merchants-title">
+      <div class="section-heading"><div><span class="eyebrow">YOUR DEVICE</span><h2 id="merchants-title">Saved merchants</h2></div><span id="merchant-count" class="local-badge">0 saved</span></div>
+      <p class="section-copy">Add businesses you have verified through a trusted channel. These records stay in this browser.</p>
+      <form id="merchant-form">
+        <label for="merchant-name">Merchant name</label>
+        <input id="merchant-name" name="name" required maxlength="80" autocomplete="organization" placeholder="e.g. Kopi Senja UGM">
+        <div class="form-grid">
+          <div><label for="merchant-city">City</label><input id="merchant-city" name="city" maxlength="60" placeholder="e.g. Yogyakarta"></div>
+          <div><label for="merchant-aliases">Other names</label><input id="merchant-aliases" name="aliases" maxlength="160" placeholder="Comma-separated"></div>
+        </div>
+        <label for="merchant-source">How did you verify it? (optional)</label>
+        <input id="merchant-source" name="source" maxlength="160" placeholder="e.g. confirmed with store staff">
+        <div class="actions"><button class="primary" type="submit">Save merchant</button></div>
+      </form>
+      <p id="merchant-message" class="message" role="status" aria-live="polite"></p>
+      <ul id="merchant-list" class="merchant-list"></ul>
+    </section>
+    </section>
   </main>
+  <script src="qr-scanner.umd.min.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
